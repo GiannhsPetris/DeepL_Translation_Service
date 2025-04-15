@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  api:
+    build: .
+    container_name: fastapi-microservice
+    ports:
+      - "8008:8008"
+    volumes:
+      - ./app:/app/app
+    environment:
+      - PORT:8008
+    restart: always
