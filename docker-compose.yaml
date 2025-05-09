@@ -7,7 +7,7 @@ services:
     ports:
       - "8008:8008"
     volumes:
-      - ./app:/app/app
+      - .:/app
     environment:
-      - PORT:8008
+      - PORT=8008
     restart: always
