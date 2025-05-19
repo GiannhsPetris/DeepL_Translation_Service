@@ -1,6 +1,7 @@
 import os
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Body
 from typing import Any, Dict, List, Union, Optional
+from fastapi.params import Query
 from fastapi.responses import StreamingResponse
 import httpx
 from pydantic import BaseModel, Field
@@ -93,28 +94,39 @@ async def translate_document(request: TranslateDocumentRequest):
 
 @app.post("/translate-json")
 async def translate_json(
-    file: UploadFile = File(...),
-    target_lang: str = Form(...),
-    source_lang: str = Form(None)
+    data: dict = Body(..., description="JSON content to translate"),
+    target_lang: str = Query(..., description="Target language code"),
+    source_lang: str = Query(None, description="Source language code (optional)")
 ):
+    """Translate JSON content using DeepL API.
+    Example input format:
+    {
+        "key1": "Hello",
+        "key2": {
+            "key3": "World"
+        },
+        "key4": [
+            "This is a test",
+            "Another test"
+        ]
+    }
+
+   Query parameters (in the URL):
+    ```
+      /translate-json?target_lang=DE&source_lang=EN
+    ```
+    """
+
     import deepl
-    import json
+    import os
 
     try:
-        contents = await file.read()
-        try:
-            data = json.loads(contents.decode('utf-8'))
-        except json.JSONDecodeError as e:
-            raise HTTPException(status_code=400, detail=f"Invalid JSON file: {str(e)}")
-
         api_key = os.getenv("DEEPL_API_KEY")
-        print(f"apikey is {api_key}")
         if not api_key:
             raise HTTPException(status_code=500, detail="DeepL API key not configured")
 
         deepl_client = deepl.Translator(api_key)
 
-        # Process the JSON to translate only values
         translated_data = await translate_json_values(
             data,
             deepl_client,
